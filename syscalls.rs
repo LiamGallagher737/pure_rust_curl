@@ -43,12 +43,17 @@ pub enum SysCall {
     Exit = 60,
 }
 
-pub fn read(fd: u64, buf: *mut u8, size: u64) -> i64 {
-    unsafe { syscall!(SysCall::Read, fd, buf as u64, size as u64) }
+#[repr(u64)]
+pub enum SysFd {
+    Stdout = 1,
 }
 
-pub fn write(fd: u64, data: *const u8, len: u64) -> i64 {
-    unsafe { syscall!(SysCall::Write, fd, data as u64, len) }
+pub fn read(fd: SysFd, buf: *mut u8, size: u64) -> i64 {
+    unsafe { syscall!(SysCall::Read, fd as u64, buf as u64, size as u64) }
+}
+
+pub fn write(fd: SysFd, data: *const u8, len: u64) -> i64 {
+    unsafe { syscall!(SysCall::Write, fd as u64, data as u64, len) }
 }
 
 pub fn exit(code: i64) -> i64 {
