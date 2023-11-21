@@ -16,7 +16,7 @@ pub unsafe extern "C" fn _start() {
     asm!("mov r8, rsp");
     let stack_ptr: *const usize;
     asm!("mov {}, r8", out(reg) stack_ptr);
-    let args_ptr = stack_ptr.add(3);
+    let args_ptr = stack_ptr.add(5);
     let argc = *args_ptr;
 
     if argc < 2 {
@@ -27,21 +27,55 @@ pub unsafe extern "C" fn _start() {
     let url_arg_ptr = args_ptr.add(2);
     let url = *url_arg_ptr as *const u8;
 
-    let code = main(url);
+    let res = main(url);
 
-    syscalls::exit(code);
+    syscalls::exit(match res {
+        Ok(_) => 0,
+        Err(msg) => {
+            println(msg);
+            1
+        },
+    });
 }
 
-unsafe fn main(url: *const u8) -> i64 {
+unsafe fn main(url: *const u8) -> Result<(), &'static str> {
     let mut c = *url;
     let mut n = 0;
     while c != 0 {
         syscalls::write(SysFd::Stdout, &c, 1);
         n += 1;
-        c = *url.add(n)
+        c = *url.add(n);
     }
     println("");
-    0
+    validate_url(url)?;
+    Ok(())
+}
+
+unsafe fn validate_url(url: *const u8) -> Result<(), &'static str> {
+    const HTTP: &[u8; 7] = b"http://";
+    let mut n = 0;
+    let mut c = *url;
+    let mut has_period = false;
+    while c != 0 {
+        if n < HTTP.len() && HTTP[n] != c {
+            return Err("Invalid url protocol");
+        }
+        if n >= HTTP.len() {
+            match c {
+                b'a'..=b'z' | b'A'..=b'Z' | b'/' | b'.' | b'-' | b'_' => {},
+                _ => return Err("Invalid url character"),
+            }
+            if c == b'.' {
+                has_period = true;
+            }
+        }
+        n += 1;
+        c = *url.add(n);
+    }
+    if !has_period {
+        return Err("No '.' found in url");
+    }
+    Ok(())
 }
 
 fn print(msg: &str) -> i64 {

@@ -2,7 +2,7 @@
 
 # Pure Rust Curl
 
-A basic curl program written in pure Rust, no external libraries. (Linux only)
+A basic curl program written in pure Rust, no external libraries. (Linux and http only)
 
 </div>
 
