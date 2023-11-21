@@ -16,7 +16,7 @@ pub unsafe extern "C" fn _start() {
     asm!("mov r8, rsp");
     let stack_ptr: *const usize;
     asm!("mov {}, r8", out(reg) stack_ptr);
-    let args_ptr = stack_ptr.add(11);
+    let args_ptr = stack_ptr.add(3);
     let argc = *args_ptr;
 
     if argc < 2 {
